@@ -7,7 +7,8 @@ class NormLinear(nn.Linear):
         super(NormLinear, self).__init__(in_features, out_features, bias=False)
 
     def forward(self, inp: Tensor) -> Tensor:
-        return nn.functional.linear(inp, nn.functional.normalize(self.weight))
+        return nn.functional.linear(nn.functional.normalize(inp),
+                                    nn.functional.normalize(self.weight))
 
 
 # TODO: check detach
