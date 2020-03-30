@@ -28,7 +28,7 @@ class CircleLoss(nn.Module):
 
 if __name__ == "__main__":
     feature = torch.rand(32, 128)
-    gt = torch.randint(high=9, dtype=torch.long, size=(32,))
+    gt = torch.randint(high=10, dtype=torch.long, size=(32,))
     norm_liner = NormLinear(128, 10)
     loss = CircleLoss(0.35, 256)
     print(loss(norm_liner(feature), gt))
