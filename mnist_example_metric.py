@@ -1,9 +1,12 @@
+import torch
 from torch import nn, Tensor
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
+
+from circle_loss import CircleLossBackward, convert_label_to_similarity
 
 
 def get_loader(is_train: bool, batch_size: int) -> DataLoader:
@@ -28,36 +31,42 @@ class Model(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
         )
-        self.linear = NormLinear(32, 10)
 
     def forward(self, inp: Tensor) -> Tensor:
         feature = self.feature_extractor(inp).mean(dim=[2, 3])
-        return self.linear(feature)
+        return nn.functional.normalize(feature)
 
 
 def main():
     model = Model()
     optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
     train_loader = get_loader(is_train=True, batch_size=64)
-    val_loader = get_loader(is_train=False, batch_size=64)
-    criterion = CircleLossLikeCE(m=0.25, gamma=30)
+    val_loader = get_loader(is_train=False, batch_size=2)
+    loss_backward = CircleLossBackward(m=0.25, gamma=80)
 
     for img, label in tqdm(train_loader):
         model.zero_grad()
         pred = model(img)
-        loss = criterion(pred, label)
-        loss.backward()
+        loss_backward(*convert_label_to_similarity(pred, label))
         optimizer.step()
 
-    top = 0
-    bot = 0
+    tp = 0
+    fn = 0
+    fp = 0
+    thresh = 0.9
     for img, label in val_loader:
         pred = model(img)
-        result = label.eq(pred.max(dim=1)[1])
-        top += float(result.sum())
-        bot += float(result.numel())
+        gt_label = label[0] == label[1]
+        pred_label = torch.sum(pred[0] * pred[1]) > thresh
+        if gt_label and pred_label:
+            tp += 1
+        elif gt_label and not pred_label:
+            fn += 1
+        elif not gt_label and pred_label:
+            fp += 1
 
-    print("Accuracy: {:.4f}".format(top / bot))
+    print("Recall: {:.4f}".format(tp / (tp + fn)))
+    print("Precision: {:.4f}".format(tp / (tp + fp)))
 
 
 if __name__ == "__main__":

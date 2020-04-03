@@ -63,4 +63,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print("CircleLossLikeCE is deprecated. Use CircleLossBackward instead.")
