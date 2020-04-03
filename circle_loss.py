@@ -40,7 +40,7 @@ def convert_label_to_similarity(feature: Tensor, label: Tensor) -> Tuple[Tensor,
     label_matrix = (label.unsqueeze(1) == label.unsqueeze(0)).int()
 
     eye_label = torch.eye(label_matrix.shape[0], dtype=label_matrix.dtype, device=label_matrix.device)
-    label_matrix -= eye_label * 2
+    label_matrix += eye_label
 
     similarity_matrix = similarity_matrix.view(-1)
     label_matrix = label_matrix.view(-1)
