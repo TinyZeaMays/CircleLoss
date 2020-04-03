@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import torch
 from torch import nn, Tensor
 
@@ -33,6 +35,18 @@ class CircleLossLikeCE(nn.Module):
         return self.loss(a * (inp - sigma) * self.gamma, label)
 
 
+def convert_label_to_similarity(feature: Tensor, label: Tensor) -> Tuple[Tensor, Tensor]:
+    similarity_matrix = feature @ feature.transpose(1, 0)
+    label_matrix = (label.unsqueeze(1) == label.unsqueeze(0)).int()
+
+    eye_label = torch.eye(label_matrix.shape[0], dtype=label_matrix.dtype, device=label_matrix.device)
+    label_matrix -= eye_label * 2
+
+    similarity_matrix = similarity_matrix.view(-1)
+    label_matrix = label_matrix.view(-1)
+    return similarity_matrix[label_matrix.eq(1)], similarity_matrix[label_matrix.eq(0)]
+
+
 class CircleLossBackward(nn.Module):
     def __init__(self, m: float, gamma: float) -> None:
         super(CircleLossBackward, self).__init__()
@@ -52,15 +66,17 @@ class CircleLossBackward(nn.Module):
         loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(logit_p).sum(), max=1e38))
         z = - torch.exp(- loss) + 1
 
-        sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma)
+        sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma, retain_graph=True)
         sn.backward(gradient=z * an * torch.softmax(logit_n, dim=0) * self.gamma)
 
         return loss.detach()
 
 
 if __name__ == "__main__":
-    inp_sp = torch.rand(100, requires_grad=True)
-    inp_sn = torch.rand(200, requires_grad=True)
+    feat = nn.functional.normalize(torch.rand(256, 64, requires_grad=True))
+    lbl = torch.randint(high=10, size=(256,))
+
+    inp_sp, inp_sn = convert_label_to_similarity(feat, lbl)
 
     circle_loss_backward = CircleLossBackward(m=0.25, gamma=256)
     circle_loss = circle_loss_backward(inp_sp, inp_sn)
