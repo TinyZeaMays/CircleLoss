@@ -1,3 +1,5 @@
+import os
+
 import torch
 from torch import nn, Tensor
 from torch.optim import SGD
@@ -22,14 +24,14 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=8, kernel_size=5),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=5),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
         )
 
     def forward(self, inp: Tensor) -> Tensor:
@@ -37,23 +39,28 @@ class Model(nn.Module):
         return nn.functional.normalize(feature)
 
 
-def main():
+def main(resume: bool = True) -> None:
     model = Model()
     optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
     train_loader = get_loader(is_train=True, batch_size=64)
     val_loader = get_loader(is_train=False, batch_size=2)
     loss_backward = CircleLossBackward(m=0.25, gamma=80)
 
-    for img, label in tqdm(train_loader):
-        model.zero_grad()
-        pred = model(img)
-        loss_backward(*convert_label_to_similarity(pred, label))
-        optimizer.step()
+    if resume and os.path.exists("resume.state"):
+        model.load_state_dict(torch.load("resume.state"))
+    else:
+        for epoch in range(10):
+            for img, label in tqdm(train_loader):
+                model.zero_grad()
+                pred = model(img)
+                loss_backward(*convert_label_to_similarity(pred, label))
+                optimizer.step()
+        torch.save(model.state_dict(), "resume.state")
 
     tp = 0
     fn = 0
     fp = 0
-    thresh = 0.9
+    thresh = 0.825
     for img, label in val_loader:
         pred = model(img)
         gt_label = label[0] == label[1]

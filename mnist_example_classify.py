@@ -21,14 +21,14 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.feature_extractor = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=8, kernel_size=5),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
             nn.Conv2d(in_channels=8, out_channels=16, kernel_size=5),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3),
-            nn.ReLU(),
             nn.MaxPool2d(kernel_size=2),
+            nn.ReLU(),
         )
         self.linear = NormLinear(32, 10)
 

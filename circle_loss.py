@@ -66,6 +66,13 @@ class CircleLossBackward(nn.Module):
         loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(logit_p).sum(), max=1e38))
         z = - torch.exp(- loss) + 1
 
+        """
+        Eq. 10:
+        sp.backward(gradient=z * (- ap) * torch.softmax(- logit_p, dim=0) * self.gamma, retain_graph=True)
+        I modified to 
+        sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma, retain_graph=True)
+        """
+
         sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma, retain_graph=True)
         sn.backward(gradient=z * an * torch.softmax(logit_n, dim=0) * self.gamma)
 
