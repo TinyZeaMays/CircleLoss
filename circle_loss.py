@@ -46,10 +46,10 @@ class CircleLossBackward(nn.Module):
         sigma_p = 1 - self.m
         sigma_n = self.m
 
-        logit_p = ap * (sp - sigma_p) * self.gamma
+        logit_p = - ap * (sp - sigma_p) * self.gamma
         logit_n = an * (sn - sigma_n) * self.gamma
 
-        loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(- logit_p).sum(), max=1e38))
+        loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(logit_p).sum(), max=1e38))
         z = - torch.exp(- loss) + 1
 
         sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma)

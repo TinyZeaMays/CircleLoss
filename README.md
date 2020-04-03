@@ -10,7 +10,7 @@ This implementation is still under developement, and I'm not sure if this code c
 
 
 
-# update
+# Update
 
 Given class-level labels, CircleLossLikeCE calculate the similarity scores between x and weight vectors w in the paradigm of approaches like ArcFace. 
 
@@ -20,9 +20,13 @@ To avoid overflow, CircleLossBackward directly backward with gradients. The loss
 
 
 
-# other
+# Other
 
 It has been said that the official implementation will be included in https://github.com/MegEngine.
+
+
+
+Is there something wrong in Eq. 10?
 
 
 
