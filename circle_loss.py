@@ -35,16 +35,17 @@ class CircleLossLikeCE(nn.Module):
         return self.loss(a * (inp - sigma) * self.gamma, label)
 
 
-def convert_label_to_similarity(feature: Tensor, label: Tensor) -> Tuple[Tensor, Tensor]:
-    similarity_matrix = feature @ feature.transpose(1, 0)
-    label_matrix = (label.unsqueeze(1) == label.unsqueeze(0)).int()
+def convert_label_to_similarity(normed_feature: Tensor, label: Tensor) -> Tuple[Tensor, Tensor]:
+    similarity_matrix = normed_feature @ normed_feature.transpose(1, 0)
+    label_matrix = label.unsqueeze(1) == label.unsqueeze(0)
 
-    eye_label = torch.eye(label_matrix.shape[0], dtype=label_matrix.dtype, device=label_matrix.device)
-    label_matrix += eye_label
+    positive_matrix = label_matrix.triu(diagonal=1)
+    negative_matrix = label_matrix.logical_not().triu(diagonal=1)
 
     similarity_matrix = similarity_matrix.view(-1)
-    label_matrix = label_matrix.view(-1)
-    return similarity_matrix[label_matrix.eq(1)], similarity_matrix[label_matrix.eq(0)]
+    positive_matrix = positive_matrix.view(-1)
+    negative_matrix = negative_matrix.view(-1)
+    return similarity_matrix[positive_matrix], similarity_matrix[negative_matrix]
 
 
 class CircleLossBackward(nn.Module):
@@ -57,11 +58,11 @@ class CircleLossBackward(nn.Module):
         ap = torch.clamp_min(- sp.detach() + 1 + self.m, min=0.)
         an = torch.clamp_min(sn.detach() + self.m, min=0.)
 
-        sigma_p = 1 - self.m
-        sigma_n = self.m
+        delta_p = 1 - self.m
+        delta_n = self.m
 
-        logit_p = - ap * (sp - sigma_p) * self.gamma
-        logit_n = an * (sn - sigma_n) * self.gamma
+        logit_p = - ap * (sp - delta_p) * self.gamma
+        logit_n = an * (sn - delta_n) * self.gamma
 
         loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(logit_p).sum(), max=1e38))
         z = - torch.exp(- loss) + 1

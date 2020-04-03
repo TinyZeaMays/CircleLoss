@@ -41,7 +41,7 @@ class Model(nn.Module):
 
 def main(resume: bool = True) -> None:
     model = Model()
-    optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
+    optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-5)
     train_loader = get_loader(is_train=True, batch_size=64)
     val_loader = get_loader(is_train=False, batch_size=2)
     loss_backward = CircleLossBackward(m=0.25, gamma=256)
@@ -77,4 +77,4 @@ def main(resume: bool = True) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    main(False)
