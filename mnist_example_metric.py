@@ -41,15 +41,15 @@ class Model(nn.Module):
 
 def main(resume: bool = True) -> None:
     model = Model()
-    optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
+    optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9)
     train_loader = get_loader(is_train=True, batch_size=64)
     val_loader = get_loader(is_train=False, batch_size=2)
-    loss_backward = CircleLossBackward(m=0.25, gamma=80)
+    loss_backward = CircleLossBackward(m=0.25, gamma=256)
 
     if resume and os.path.exists("resume.state"):
         model.load_state_dict(torch.load("resume.state"))
     else:
-        for epoch in range(10):
+        for epoch in range(20):
             for img, label in tqdm(train_loader):
                 model.zero_grad()
                 pred = model(img)
@@ -60,7 +60,7 @@ def main(resume: bool = True) -> None:
     tp = 0
     fn = 0
     fp = 0
-    thresh = 0.825
+    thresh = 0.8
     for img, label in val_loader:
         pred = model(img)
         gt_label = label[0] == label[1]

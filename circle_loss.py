@@ -69,7 +69,7 @@ class CircleLossBackward(nn.Module):
         """
         Eq. 10:
         sp.backward(gradient=z * (- ap) * torch.softmax(- logit_p, dim=0) * self.gamma, retain_graph=True)
-        I modified to 
+        I modified it to 
         sp.backward(gradient=z * (- ap) * torch.softmax(logit_p, dim=0) * self.gamma, retain_graph=True)
         """
 
