@@ -16,7 +16,7 @@ Given class-level labels, CircleLossLikeCE calculate the similarity scores betwe
 
 For pair-wise labels, another implementation https://github.com/xiangli13/circle-loss is suggested.
 
-To avoid overflow, CircleLossBackward directly backward with gradients. The loss returned is has already been detached.
+To avoid overflow, CircleLossBackward directly backward with gradients. The loss returned has already been detached.
 
 
 
