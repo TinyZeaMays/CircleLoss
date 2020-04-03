@@ -5,7 +5,7 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
-from circle_loss import CircleLoss, NormLinear
+from circle_loss import CircleLossLikeCE, NormLinear
 
 
 def get_loader(is_train: bool, batch_size: int) -> DataLoader:
@@ -42,7 +42,7 @@ def main():
     optimizer = SGD(model.parameters(), lr=0.01, momentum=0.9)
     train_loader = get_loader(is_train=True, batch_size=64)
     val_loader = get_loader(is_train=False, batch_size=64)
-    criterion = CircleLoss(m=0.25, gamma=30)
+    criterion = CircleLossLikeCE(m=0.25, gamma=30)
 
     for img, label in tqdm(train_loader):
         model.zero_grad()

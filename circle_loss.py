@@ -11,10 +11,9 @@ class NormLinear(nn.Linear):
                                     nn.functional.normalize(self.weight))
 
 
-# TODO: check detach
-class CircleLoss(nn.Module):
+class CircleLossLikeCE(nn.Module):
     def __init__(self, m: float, gamma: float) -> None:
-        super(CircleLoss, self).__init__()
+        super(CircleLossLikeCE, self).__init__()
         self.m = m
         self.gamma = gamma
         self.loss = nn.CrossEntropyLoss()
@@ -34,9 +33,36 @@ class CircleLoss(nn.Module):
         return self.loss(a * (inp - sigma) * self.gamma, label)
 
 
+class CircleLossBackward(nn.Module):
+    def __init__(self, m: float, gamma: float) -> None:
+        super(CircleLossBackward, self).__init__()
+        self.m = m
+        self.gamma = gamma
+
+    def forward(self, sp: Tensor, sn: Tensor) -> Tensor:
+        ap = torch.clamp_min(- sp.detach() + 1 + self.m, min=0.)
+        an = torch.clamp_min(sn.detach() + self.m, min=0.)
+
+        sigma_p = 1 - self.m
+        sigma_n = self.m
+
+        logit_p = ap * (sp - sigma_p) * self.gamma
+        logit_n = an * (sn - sigma_n) * self.gamma
+
+        loss = torch.log(1 + torch.clamp_max(torch.exp(logit_n).sum() * torch.exp(- logit_p).sum(), max=1e38))
+        z = - torch.exp(- loss) + 1
+
+        sp.backward(gradient=z * ap * torch.softmax(logit_p, dim=0))
+        sn.backward(gradient=z * an * torch.softmax(logit_n, dim=0))
+
+        return loss.detach()
+
+
 if __name__ == "__main__":
-    feature = torch.rand(32, 128)
-    gt = torch.randint(high=10, dtype=torch.long, size=(32,))
-    norm_linear = NormLinear(128, 10)
-    loss = CircleLoss(0.25, 256)
-    print(loss(norm_linear(feature), gt))
+    inp_sp = torch.rand(100, requires_grad=True)
+    inp_sn = torch.rand(200, requires_grad=True)
+
+    circle_loss_backward = CircleLossBackward(m=0.25, gamma=256)
+    circle_loss = circle_loss_backward(inp_sp, inp_sn)
+
+    print(circle_loss)
