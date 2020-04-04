@@ -26,6 +26,14 @@ Sorry for using master branch as dev. Some early implementations are kept in  ci
 
 
 
+CircleLossLikeCE is an early implementation to use CircleLoss in the paradigm of approaches like ArcFace. It only consists with the paper on a special case.
+
+
+
+CircleLossBackward is an early implementation to avoid overflow in the method of applying backward with handcraft gradients. A negative sign is added to the Eq. 10 in this code to fix the equation. It's correct, stable but messy.
+
+
+
 # Other
 
 It has been said that the official implementation will be included in https://github.com/MegEngine.
@@ -33,10 +41,4 @@ It has been said that the official implementation will be included in https://gi
 
 
 Thanks very much for Yifan Sun's advice!
-
-
-
-Is there something wrong in Eq. 10?
-
-
 
