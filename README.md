@@ -22,7 +22,7 @@ For pair-wise labels, another implementation https://github.com/xiangli13/circle
 
 # Early
 
-Sorry for using master branch as dev. Some early implementations are kept in  circle_loss.py. 
+Sorry for using master branch as dev. Some early implementations are kept in  circle_loss_early.py. 
 
 
 
