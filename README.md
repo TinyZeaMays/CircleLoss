@@ -12,13 +12,7 @@ This implementation is still under developement, and I'm not sure if this code c
 
 # Update
 
-To avoid overflow, CircleLossBackward directly backward with gradients. The loss returned has already been detached. I just changed a sign in Eq 10.
-
-
-
-CircleLossLikeCE is my early implementation which was named with CircleLoss and is replaced by CircleLossBackward.
-
-Given class-level labels, CircleLossLikeCE calculate the similarity scores between x and weight vectors w in the paradigm of approaches like ArcFace. 
+Use CircleLoss in circle_loss.py, and there is a simple example of mnist in mnist_example.py
 
 
 
@@ -26,9 +20,19 @@ For pair-wise labels, another implementation https://github.com/xiangli13/circle
 
 
 
+# Early
+
+Sorry for using master branch as dev. Some early implementations are kept in  circle_loss.py. 
+
+
+
 # Other
 
 It has been said that the official implementation will be included in https://github.com/MegEngine.
+
+
+
+Thanks very much for Yifan Sun's advice!
 
 
 

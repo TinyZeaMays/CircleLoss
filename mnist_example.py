@@ -8,7 +8,7 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
-from circle_loss import CircleLossBackward, convert_label_to_similarity
+from circle_loss import convert_label_to_similarity, CircleLoss
 
 
 def get_loader(is_train: bool, batch_size: int) -> DataLoader:
@@ -44,7 +44,7 @@ def main(resume: bool = True) -> None:
     optimizer = SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=1e-5)
     train_loader = get_loader(is_train=True, batch_size=64)
     val_loader = get_loader(is_train=False, batch_size=2)
-    loss_backward = CircleLossBackward(m=0.25, gamma=256)
+    criterion = CircleLoss(m=0.25, gamma=80)
 
     if resume and os.path.exists("resume.state"):
         model.load_state_dict(torch.load("resume.state"))
@@ -53,14 +53,15 @@ def main(resume: bool = True) -> None:
             for img, label in tqdm(train_loader):
                 model.zero_grad()
                 pred = model(img)
-                loss_backward(*convert_label_to_similarity(pred, label))
+                loss = criterion(*convert_label_to_similarity(pred, label))
+                loss.backward()
                 optimizer.step()
         torch.save(model.state_dict(), "resume.state")
 
     tp = 0
     fn = 0
     fp = 0
-    thresh = 0.8
+    thresh = 0.75
     for img, label in val_loader:
         pred = model(img)
         gt_label = label[0] == label[1]
@@ -77,4 +78,4 @@ def main(resume: bool = True) -> None:
 
 
 if __name__ == "__main__":
-    main(False)
+    main()
